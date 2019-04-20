@@ -470,6 +470,115 @@ xmlr.add_type('transmission',
                                     [Transmission, PR2Transmission]))
 
 
+class ImageSpecs(xmlr.Object):
+    def __init__(self, width=0, height=0, hfov=0.0, format=None, near=0.0, far=0.0):
+        self.width = width
+        self.height = height
+        self.hfov = hfov
+        self.format = format
+        self.near = near
+        self.far = far
+
+
+xmlr.reflect(ImageSpecs, tag='image_specs', params=[
+    xmlr.Attribute('width', float),
+    xmlr.Attribute('height', float),
+    xmlr.Attribute('format', str),
+    xmlr.Attribute('hfov', float),
+    xmlr.Attribute('near', float),
+    xmlr.Attribute('far', float)
+])
+
+
+class Camera(xmlr.Object):
+    def __init__(self, image=None):
+        self.image = image
+
+
+xmlr.reflect(Camera, tag='camera', params=[
+    xmlr.Element('image', ImageSpecs, False)
+])
+
+
+class RaySpecs(xmlr.Object):
+    def __init__(self, samples=0, resolution=0.0, min_angle=0.0, max_angle=0.0):
+        self.samples = samples
+        self.resolution = resolution
+        self.min_angle = min_angle
+        self.max_angle = max_angle
+
+
+xmlr.reflect(RaySpecs, tag='ray_specs', params=[
+    xmlr.Attribute('samples', float),
+    xmlr.Attribute('resolution', float),
+    xmlr.Attribute('min_angle', float),
+    xmlr.Attribute('max_angle', float),
+])
+
+
+class Ray(xmlr.Object):
+    def __init__(self, horizontal=None, vertical=None):
+        self.horizontal = horizontal
+        self.vertical = vertical
+
+
+xmlr.reflect(Ray, tag='ray', params=[
+    xmlr.Element('horizontal', RaySpecs),
+    xmlr.Element('vertical', RaySpecs, False)
+])
+
+
+class Sensor(xmlr.Object):
+    def __init__(self, name=None, update_rate=0.0, parent=None, camera=None, ray=None, origin=None):
+        self.aggregate_init()
+        self.name = name
+        self.parent = parent
+        self.cameras = []
+        self.rays = []
+        self.update_rate = update_rate
+        self.origin = origin
+
+    def __get_camera(self):
+        """Return the first camera or None."""
+        if self.cameras:
+            return self.cameras[0]
+
+    def __set_camera(self, camera):
+        """Set the first camera."""
+        if self.cameras:
+            self.cameras[0] = camera
+        else:
+            self.cameras.append(camera)
+
+    def __get_ray(self):
+        """Return the first ray or None."""
+        if self.rays:
+            return self.rays[0]
+
+    def __set_ray(self, ray):
+        """Set the first ray."""
+        if self.rays:
+            self.rays[0] = ray
+        else:
+            self.rays.append(ray)
+
+
+    # Properties for backwards compatibility
+    camera = property(__get_camera, __set_camera)
+    ray = property(__get_ray, __set_ray)
+
+
+xmlr.reflect(Sensor, tag='sensor', params=[
+    name_attribute,
+    xmlr.Element('parent', 'element_link'),
+    xmlr.Attribute('update_rate', float),
+    origin_element,
+    xmlr.AggregateElement('camera', Camera),
+    xmlr.AggregateElement('ray', Ray),
+
+])
+
+
 class Robot(xmlr.Object):
     def __init__(self, name=None):
         self.aggregate_init()
@@ -477,12 +586,14 @@ class Robot(xmlr.Object):
         self.name = name
         self.joints = []
         self.links = []
+        self.sensors = []
         self.materials = []
         self.gazebos = []
         self.transmissions = []
 
         self.joint_map = {}
         self.link_map = {}
+        self.sensor_map = {}
 
         self.parent_map = {}
         self.child_map = {}
@@ -501,9 +612,15 @@ class Robot(xmlr.Object):
         elif typeName == 'link':
             link = elem
             self.link_map[link.name] = link
+        elif typeName == 'sensor':
+            sensor = elem
+            self.sensor_map[sensor.name] = sensor
 
     def add_link(self, link):
         self.add_aggregate('link', link)
+
+    def add_sensor(self, sensor):
+        self.add_aggregate('sensor', sensor)
 
     def add_joint(self, joint):
         self.add_aggregate('joint', joint)
@@ -549,6 +666,7 @@ class Robot(xmlr.Object):
 xmlr.reflect(Robot, tag='robot', params=[
     xmlr.Attribute('name', str, False),  # Is 'name' a required attribute?
     xmlr.AggregateElement('link', Link),
+    xmlr.AggregateElement('sensor', Sensor),
     xmlr.AggregateElement('joint', Joint),
     xmlr.AggregateElement('gazebo', xmlr.RawType()),
     xmlr.AggregateElement('transmission', 'transmission'),
