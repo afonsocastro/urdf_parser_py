@@ -529,7 +529,7 @@ xmlr.reflect(Ray, tag='ray', params=[
 
 
 class Sensor(xmlr.Object):
-    def __init__(self, name=None, update_rate=0.0, parent=None, camera=None, ray=None, origin=None):
+    def __init__(self, name=None, update_rate=0.0, parent=None, camera=None, ray=None, origin=None, calibration_parent=None, calibration_child=None):
         self.aggregate_init()
         self.name = name
         self.parent = parent
@@ -537,6 +537,8 @@ class Sensor(xmlr.Object):
         self.rays = []
         self.update_rate = update_rate
         self.origin = origin
+        self.calibration_parent = calibration_parent
+        self.calibration_child = calibration_child
 
     def __get_camera(self):
         """Return the first camera or None."""
@@ -575,6 +577,8 @@ xmlr.reflect(Sensor, tag='sensor', params=[
     origin_element,
     xmlr.AggregateElement('camera', Camera),
     xmlr.AggregateElement('ray', Ray),
+    xmlr.Element('calibration_parent', 'element_link', False),
+    xmlr.Element('calibration_child', 'element_link', False),
 
 ])
 
