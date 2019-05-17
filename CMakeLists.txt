@@ -1,7 +1,8 @@
 cmake_minimum_required( VERSION 2.8 FATAL_ERROR )
 project(urdfdom_py)
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+        rospy)
 catkin_package()
 
 catkin_python_setup()
@@ -9,6 +10,10 @@ catkin_python_setup()
 catkin_install_python(PROGRAMS
   scripts/display_urdf
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+include_directories(
+        ${catkin_INCLUDE_DIRS}
 )
 
 if (CATKIN_ENABLE_TESTING)
