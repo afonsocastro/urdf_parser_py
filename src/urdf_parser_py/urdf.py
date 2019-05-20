@@ -7,6 +7,7 @@ import urdf_parser_py.xml_reflection as xmlr
 
 xmlr.start_namespace('urdf')
 
+xmlr.add_type('topic_name', xmlr.SimpleElementType('topic', str))
 xmlr.add_type('element_link', xmlr.SimpleElementType('link', str))
 xmlr.add_type('element_xyz', xmlr.SimpleElementType('xyz', 'vector3'))
 
@@ -527,9 +528,8 @@ xmlr.reflect(Ray, tag='ray', params=[
     xmlr.Element('vertical', RaySpecs, False)
 ])
 
-
 class Sensor(xmlr.Object):
-    def __init__(self, name=None, update_rate=0.0, parent=None, camera=None, ray=None, origin=None, calibration_parent=None, calibration_child=None):
+    def __init__(self, name=None, update_rate=0.0, parent=None, camera=None, ray=None, origin=None, calibration_parent=None, calibration_child=None, topic=None):
         self.aggregate_init()
         self.name = name
         self.parent = parent
@@ -539,6 +539,7 @@ class Sensor(xmlr.Object):
         self.origin = origin
         self.calibration_parent = calibration_parent
         self.calibration_child = calibration_child
+        self.topic = topic
 
     def __get_camera(self):
         """Return the first camera or None."""
@@ -579,6 +580,7 @@ xmlr.reflect(Sensor, tag='sensor', params=[
     xmlr.AggregateElement('ray', Ray),
     xmlr.Element('calibration_parent', 'element_link', False),
     xmlr.Element('calibration_child', 'element_link', False),
+    xmlr.Element('topic', 'topic_name', False),
 
 ])
 
